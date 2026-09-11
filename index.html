@@ -83,7 +83,7 @@
       <td><input id="vDays" type="number" min="0" step="1" value="7" style="width:96px"></td>
       <td><input id="vH" type="number" min="0" step="1" value="0" style="width:96px"></td>
       <td><button id="nowFrom" class="btn ghost">From now</button></td></tr></tbody></table>
-    <div class="note">Hours are plain running hours like 72, not a clock on hh:mm. Days add onto the date, hours add onto the time, and both pile onto the same from moment.</div>
+    <div class="note">Hours are plain running hours like 72, not a clock on hh:mm. Use one box or both, a blank box counts as zero, so a validity of just 1080 hours works on its own as 45 days.</div>
     <div class="out">
       <div><div class="lbl">Valid up to date</div><div class="big" id="vDate" style="color:#b45309">18.09.2026</div></div>
       <div><div class="lbl">Valid up to time, 24 h</div><div class="big" id="vTime" style="color:#b45309">14:00</div></div>
@@ -181,24 +181,33 @@ document.getElementById("addToTotal").addEventListener("click",()=>{
 // ---- section 3 : valid up to
 function computeValid(){
   const d1=document.getElementById("v1d").value, t1=document.getElementById("v1t").value;
-  const days=parseFloat(document.getElementById("vDays").value),
-        hours=parseFloat(document.getElementById("vH").value);
   const o=jnDate(d1,t1);
+  const dRaw=document.getElementById("vDays").value.trim(),
+        hRaw=document.getElementById("vH").value.trim();
   const err=document.getElementById("vErr");
-  if(!o||!Number.isFinite(days)||!Number.isFinite(hours)||days<0||hours<0){
+  if(!o){
     err.style.display="block";
-    err.textContent="Check the fields. From needs dd.mm.yyyy and hh:mm, and valid for days and hours must be plain numbers of 0 or more.";
+    err.textContent="From needs dd.mm.yyyy and hh:mm on the 24 hour clock.";
+    return; }
+  if(dRaw===""&&hRaw===""){
+    err.style.display="block";
+    err.textContent="Fill valid for days, valid for hours, or both. A blank box counts as zero.";
+    return; }
+  const days=dRaw===""?0:parseFloat(dRaw), hours=hRaw===""?0:parseFloat(hRaw);
+  if(!Number.isFinite(days)||!Number.isFinite(hours)||days<0||hours<0){
+    err.style.display="block";
+    err.textContent="Valid for days and hours must be numbers of 0 or more. Use only the box you need and leave the other blank.";
     return; }
   err.style.display="none";
   const extraMin=days*1440+hours*60;
   const o2=new Date(o.getTime()+extraMin*60000);
   const ed=Math.floor(extraMin/1440), eh=Math.floor((extraMin%1440)/60);
-  const parts=[days+(days===1?" day":" days"), hours+(hours===1?" hour":" hours")];
   document.getElementById("vDate").textContent=fmtDate(o2);
   document.getElementById("vTime").textContent=fmtTime(o2);
-  document.getElementById("vAdd").textContent=parts.join(" + ");
+  document.getElementById("vAdd").textContent=
+    days+" day"+(days===1?"":"s")+" + "+hours+" hour"+(hours===1?"":"s");
   document.getElementById("vAddEq").textContent=
-    "equals "+(ed?ed+(ed===1?" day":" days")+" ":"")+eh+" hour"+(eh===1?"":"s")+" from "+fmtDate(o)+" "+fmtTime(o);
+    "equals "+(ed?ed+" day"+(ed===1?"":"s")+" ":"")+eh+" hour"+(eh===1?"":"s")+" from "+fmtDate(o)+" "+fmtTime(o);
 }
 ["v1d","v1t","vDays","vH"].forEach(id=>document.getElementById(id).addEventListener("input",computeValid));
 document.getElementById("nowFrom").addEventListener("click",()=>{
