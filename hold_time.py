@@ -27,6 +27,25 @@ def parse_ts(value):
     return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
 
 
+def format_datetime(dt):
+    """Render a datetime on the 24 hour clock as YYYY-MM-DD HH:MM."""
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
+def format_hours(hours):
+    """Render decimal hours as hh:mm on the 24 hour clock, hours can pass 24."""
+    if hours is None:
+        return None
+    sign = "-" if hours < 0 else ""
+    total = abs(hours)
+    h = int(total)
+    m = int(round((total - h) * 60))
+    if m == 60:
+        h += 1
+        m = 0
+    return "%s%02d:%02d" % (sign, h, m)
+
+
 def duration_hours(start, end):
     if end < start:
         raise HoldTimeError("End cannot be before start (step %s)" % start)
@@ -63,10 +82,15 @@ def evaluate(steps, global_limit_h, now=None):
         cum += dur
         rows.append({
             "name": s.get("name"), "start": s["start"],
-            "end": s.get("end"), "duration_h": round(dur, 2),
+            "end": s.get("end"),
+            "start_time": format_datetime(start),
+            "end_time": format_datetime(end),
+            "duration_h": round(dur, 2),
+            "duration_hhmm": format_hours(dur),
             "limit_h": limit,
             "status": step_status(dur, limit),
             "cumulative_h": round(cum, 2),
+            "cumulative_hhmm": format_hours(cum),
         })
 
     total = cum
@@ -88,11 +112,16 @@ def evaluate(steps, global_limit_h, now=None):
     return {
         "steps": rows,
         "global_limit_h": global_limit_h,
+        "global_limit_hhmm": format_hours(global_limit_h),
         "cumulative_total_h": round(total, 2),
+        "cumulative_total_hhmm": format_hours(total),
         "cumulative_status": cum_status,
         "remaining_h": round(max(0.0, global_limit_h - total), 2),
+        "remaining_hhmm": format_hours(max(0.0, global_limit_h - total)),
         "over_by_h": round(max(0.0, total - global_limit_h), 2),
+        "over_by_hhmm": format_hours(max(0.0, total - global_limit_h)),
         "projected_total_h": round(projected, 2) if projected is not None else None,
+        "projected_total_hhmm": format_hours(projected),
         "excursion": cum_status == "Over"
                      or any(r["status"] == "Over" for r in rows),
     }
@@ -109,21 +138,22 @@ def main(argv=None):
     with open(args.json) as f:
         steps = json.load(f)
     res = evaluate(steps, args.global_limit, args.now)
-    print("Step                       Dura(h)   Limit(h)  Status  Cumulative(h)")
+    print("Step                        Start (24h)        End (24h)          Dura   Limit  Status  Cumm (HH:MM)")
     for r in res["steps"]:
-        print("%-24s %9.2f %10s %-8s %13.2f"
-              % (r["name"], r["duration_h"], r["limit_h"], r["status"],
-                 r["cumulative_h"]))
+        print("%-26s %-18s %-18s %-6s %-6s %-7s %s"
+              % (r["name"], r["start_time"], r["end_time"],
+                 r["duration_hhmm"], format_hours(r["limit_h"]),
+                 r["status"], r["cumulative_hhmm"]))
     print()
-    print("Cumulative hold: %s h of %s h -> %s"
-          % (res["cumulative_total_h"], res["global_limit_h"],
+    print("Cumulative hold: %s of %s -> %s"
+          % (res["cumulative_total_hhmm"], res["global_limit_hhmm"],
              res["cumulative_status"]))
     if res["over_by_h"] > 0:
-        print("EXCURSION: over by %s h" % res["over_by_h"])
-    elif res["projected_total_h"] is not None:
-        print("Projected total at planned end: %s h" % res["projected_total_h"])
+        print("EXCURSION: over by %s" % res["over_by_hhmm"])
+    elif res["projected_total_hhmm"] is not None:
+        print("Projected total at planned end: %s" % res["projected_total_hhmm"])
     else:
-        print("Remaining before limit: %s h" % res["remaining_h"])
+        print("Remaining before limit: %s" % res["remaining_hhmm"])
     return 0
 
 

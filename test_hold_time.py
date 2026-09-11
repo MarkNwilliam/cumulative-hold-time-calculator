@@ -1,6 +1,9 @@
 import unittest
 
-from hold_time import HoldTimeError, duration_hours, evaluate, parse_ts, step_status
+from hold_time import (
+    HoldTimeError, duration_hours, evaluate, format_datetime, format_hours,
+    parse_ts, step_status,
+)
 
 
 def granulation_steps(ends=True):
@@ -93,6 +96,43 @@ class EvaluateTests(unittest.TestCase):
     def test_bad_global_limit(self):
         with self.assertRaises(HoldTimeError):
             evaluate(granulation_steps(), 0.0)
+
+
+class FormatTests(unittest.TestCase):
+    def test_format_hours_rounding(self):
+        self.assertEqual(format_hours(0), "00:00")
+        self.assertEqual(format_hours(8.0), "08:00")
+        self.assertEqual(format_hours(8.5), "08:30")
+        self.assertEqual(format_hours(1.75), "01:45")
+
+    def test_format_hours_rounds_minutes_to_60(self):
+        self.assertEqual(format_hours(1.999), "02:00")
+
+    def test_format_hours_passes_24(self):
+        self.assertEqual(format_hours(26.75), "26:45")
+
+    def test_format_hours_none(self):
+        self.assertIsNone(format_hours(None))
+
+    def test_format_datetime_24h_clock(self):
+        self.assertEqual(format_datetime(parse_ts("2026-09-01 06:05")),
+                         "2026-09-01 06:05")
+        self.assertEqual(format_datetime(parse_ts("2026-09-01 18:40")),
+                         "2026-09-01 18:40")
+
+    def test_evaluate_reports_hhmm_fields(self):
+        res = evaluate(granulation_steps(), 24.0, now="2026-09-01 16:00")
+        self.assertEqual(res["cumulative_total_hhmm"], "08:00")
+        self.assertEqual(res["global_limit_hhmm"], "24:00")
+        self.assertEqual(res["remaining_hhmm"], "16:00")
+        self.assertEqual(res["steps"][0]["duration_hhmm"], "03:00")
+        self.assertEqual(res["steps"][0]["cumulative_hhmm"], "03:00")
+        self.assertEqual(res["steps"][-1]["start_time"], "2026-09-01 15:00")
+
+    def test_evaluate_projected_hhmm(self):
+        steps = granulation_steps(ends=False)
+        res = evaluate(steps, 24.0, now="2026-09-01 16:30")
+        self.assertEqual(res["projected_total_hhmm"], "10:00")
 
 
 if __name__ == "__main__":
