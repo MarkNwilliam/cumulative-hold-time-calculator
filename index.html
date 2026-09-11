@@ -77,16 +77,18 @@
 
   <div class="panel">
     <h3>3 &middot; Valid up to (out date and time)</h3>
-    <table><thead><tr><th>From date, dd.mm.yyyy</th><th>From time, hh:mm</th><th>Valid for days</th><th>Valid for hh:mm</th><th></th></tr></thead>
+    <table><thead><tr><th>From date, dd.mm.yyyy</th><th>From time, hh:mm</th><th>Valid for days</th><th>Valid for hours</th><th></th></tr></thead>
     <tbody><tr><td><input id="v1d" class="c-d" value="11.09.2026"></td>
       <td><input id="v1t" class="c-t" value="14:00"></td>
-      <td><input id="vDays" type="number" min="0" step="1" value="0" style="width:96px"></td>
-      <td><input id="vHh" class="c-t" value="72:00"></td>
+      <td><input id="vDays" type="number" min="0" step="1" value="7" style="width:96px"></td>
+      <td><input id="vH" type="number" min="0" step="1" value="0" style="width:96px"></td>
       <td><button id="nowFrom" class="btn ghost">From now</button></td></tr></tbody></table>
+    <div class="note">Hours are plain running hours like 72, not a clock on hh:mm. Days add onto the date, hours add onto the time, and both pile onto the same from moment.</div>
     <div class="out">
-      <div><div class="lbl">Valid up to date</div><div class="big" id="vDate" style="color:#b45309">14.09.2026</div></div>
+      <div><div class="lbl">Valid up to date</div><div class="big" id="vDate" style="color:#b45309">18.09.2026</div></div>
       <div><div class="lbl">Valid up to time, 24 h</div><div class="big" id="vTime" style="color:#b45309">14:00</div></div>
-      <div><div class="lbl">Adds on</div><div class="big" id="vAdd" style="font-size:16px;color:var(--ink)">0 day 00:00</div></div>
+      <div><div class="lbl">Adds on</div><div class="big" id="vAdd" style="font-size:18px;color:var(--ink)">7 days 0 hours</div>
+        <div class="lbl" id="vAddEq" style="margin-top:4px;text-transform:none;letter-spacing:0">equals 7 days 0 hours from 11.09.2026 14:00</div></div>
     </div>
     <div class="err" id="vErr" style="display:none"></div>
   </div>
@@ -179,22 +181,26 @@ document.getElementById("addToTotal").addEventListener("click",()=>{
 // ---- section 3 : valid up to
 function computeValid(){
   const d1=document.getElementById("v1d").value, t1=document.getElementById("v1t").value;
-  const days=parseInt(document.getElementById("vDays").value,10);
-  const hh=document.getElementById("vHh").value;
-  const o=jnDate(d1,t1), mm=parseHhmm(hh);
+  const days=parseFloat(document.getElementById("vDays").value),
+        hours=parseFloat(document.getElementById("vH").value);
+  const o=jnDate(d1,t1);
   const err=document.getElementById("vErr");
-  if(!o||mm==null||!(days>=0)||Number.isNaN(days)){
+  if(!o||!Number.isFinite(days)||!Number.isFinite(hours)||days<0||hours<0){
     err.style.display="block";
-    err.textContent="Check the fields. From needs dd.mm.yyyy and hh:mm, days cannot be negative, and the hh:mm part must look like 06:30 or 72:00.";
+    err.textContent="Check the fields. From needs dd.mm.yyyy and hh:mm, and valid for days and hours must be plain numbers of 0 or more.";
     return; }
   err.style.display="none";
-  const extra=days*1440+mm;
-  const o2=new Date(o.getTime()+extra*60000);
+  const extraMin=days*1440+hours*60;
+  const o2=new Date(o.getTime()+extraMin*60000);
+  const ed=Math.floor(extraMin/1440), eh=Math.floor((extraMin%1440)/60);
+  const parts=[days+(days===1?" day":" days"), hours+(hours===1?" hour":" hours")];
   document.getElementById("vDate").textContent=fmtDate(o2);
   document.getElementById("vTime").textContent=fmtTime(o2);
-  document.getElementById("vAdd").textContent=(days?days+" day"+(days>1?"s":"")+" ":"")+hhmm(mm);
+  document.getElementById("vAdd").textContent=parts.join(" + ");
+  document.getElementById("vAddEq").textContent=
+    "equals "+(ed?ed+(ed===1?" day":" days")+" ":"")+eh+" hour"+(eh===1?"":"s")+" from "+fmtDate(o)+" "+fmtTime(o);
 }
-["v1d","v1t","vDays","vHh"].forEach(id=>document.getElementById(id).addEventListener("input",computeValid));
+["v1d","v1t","vDays","vH"].forEach(id=>document.getElementById(id).addEventListener("input",computeValid));
 document.getElementById("nowFrom").addEventListener("click",()=>{
   const n=new Date(); document.getElementById("v1d").value=fmtDate(n);
   document.getElementById("v1t").value=fmtTime(n); computeValid(); });

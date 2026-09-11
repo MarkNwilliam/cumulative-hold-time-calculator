@@ -28,7 +28,7 @@ The page is a field calculator, so you type your own numbers. Dates are day.mont
 
 - **Elapsed time:** enter the taken date and time, then the processed date and time, and the tool gives the difference as hh:mm with a breakdown in days, hours and minutes. The Use now button fills the end with the live clock.
 - **Running total:** any number of hh:mm durations can be typed or added onto the list, and the total rolls up live against the 72:00 hold limit, showing the amount still left or how far over you are. An elapsed gap from the first panel can be pushed straight into the running total.
-- **Valid up to:** give a from date and time plus a validity written as days and hh:mm, and the tool returns the valid up to date and the valid up to time on the 24 hour clock. From now fills the start with the live clock.
+- **Valid up to:** give a from date and time plus a validity split into two plain numbers, whole days and whole hours, and the tool returns the valid up to date and the valid up to time on the 24 hour clock. Hours are running hours like 72, not a clock, so seven days and seventy two hours means twice the one day and three days combined. From now fills the start with the live clock.
 
 ## Inputs
 
