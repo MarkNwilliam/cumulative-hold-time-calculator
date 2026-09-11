@@ -20,7 +20,15 @@
 
 A granulation batch that sits too long picks up moisture, grows fines, segregates and can drift off spec before anyone notices. Hold time is usually controlled step by step, but the cumulative sitting time is what really matters at compression. This tool takes your step list with start, planned end and a limit per step, adds any still running step evaluated against the current time, and rolls everything into a cumulative total against a global limit. Step status and cumulative status are marked On time, Near at 80%, or Over. If any step or the running total crosses its line, the batch raises an excursion flag for the deviation review.
 
-Every time value is dated, so the clock lives on the 24 hour system at hh:mm and nothing depends on memory of which shift something landed. Start and planned end are written as year, month, day and hh:mm, and the running step honors the time you call it at. Durations, the cumulative total, the remaining allowance and how far over you are all come back in hh:mm, with running hours carrying on past 24:00 if a step crosses midnight.
+Every time value is dated, so the clock lives on the 24 hour system at hh:mm and nothing depends on memory of which shift something landed. Durations, the cumulative total, the remaining allowance and how far over you are all come back in hh:mm, with running hours carrying on past 24:00 if a step crosses midnight.
+
+## Using the dashboard
+
+The page is a field calculator, so you type your own numbers. Dates are day.month.year and times are hh:mm on the 24 hour clock, no AM or PM.
+
+- **Elapsed time:** enter the taken date and time, then the processed date and time, and the tool gives the difference as hh:mm with a breakdown in days, hours and minutes. The Use now button fills the end with the live clock.
+- **Running total:** any number of hh:mm durations can be typed or added onto the list, and the total rolls up live against the 72:00 hold limit, showing the amount still left or how far over you are. An elapsed gap from the first panel can be pushed straight into the running total.
+- **Valid up to:** give a from date and time plus a validity written as days and hh:mm, and the tool returns the valid up to date and the valid up to time on the 24 hour clock. From now fills the start with the live clock.
 
 ## Inputs
 
